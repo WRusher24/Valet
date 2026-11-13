@@ -137,3 +137,31 @@ export type Combo = typeof combos.$inferSelect;
 export type ComboColor = typeof comboColors.$inferSelect;
 export type Outfit = typeof outfits.$inferSelect;
 export type OutfitItem = typeof outfitItems.$inferSelect;
+
+/** Per-user "removed from my view" markers for curated (shared) outfits. */
+export const hiddenOutfits = pgTable(
+  "hidden_outfits",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    outfitId: uuid("outfit_id")
+      .notNull()
+      .references(() => outfits.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.outfitId] })],
+);
+
+/** Per-user "removed from my view" markers for curated (shared) combinations. */
+export const hiddenCombos = pgTable(
+  "hidden_combos",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    comboId: uuid("combo_id")
+      .notNull()
+      .references(() => combos.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.comboId] })],
+);

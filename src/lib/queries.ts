@@ -1,7 +1,16 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, notExists, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { comboColors, combos, favorites, outfitItems, outfits, wearLogs } from "@/db/schema";
+import {
+  comboColors,
+  combos,
+  favorites,
+  hiddenCombos,
+  hiddenOutfits,
+  outfitItems,
+  outfits,
+  wearLogs,
+} from "@/db/schema";
 import type { ColorFamily, GarmentSlot, Season, SeasonFilter } from "./constants";
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -52,8 +61,26 @@ export interface WearEntry {
 const SLOT_ORDER: Record<GarmentSlot, number> = { layer: 0, top: 1, bottom: 2, shoes: 3 };
 
 /** Visible = curated starter library OR owned by the current user. */
-const comboVisible = (userId: string) => or(isNull(combos.userId), eq(combos.userId, userId));
-const outfitVisible = (userId: string) => or(isNull(outfits.userId), eq(outfits.userId, userId));
+const comboVisible = (userId: string) =>
+  and(
+    or(isNull(combos.userId), eq(combos.userId, userId)),
+    notExists(
+      db
+        .select({ one: sql`1` })
+        .from(hiddenCombos)
+        .where(and(eq(hiddenCombos.comboId, combos.id), eq(hiddenCombos.userId, userId))),
+    ),
+  );
+const outfitVisible = (userId: string) =>
+  and(
+    or(isNull(outfits.userId), eq(outfits.userId, userId)),
+    notExists(
+      db
+        .select({ one: sql`1` })
+        .from(hiddenOutfits)
+        .where(and(eq(hiddenOutfits.outfitId, outfits.id), eq(hiddenOutfits.userId, userId))),
+    ),
+  );
 
 async function colorsByCombo(comboIds: string[]): Promise<Map<string, ColorView[]>> {
   const map = new Map<string, ColorView[]>();
@@ -307,4 +334,13 @@ export async function listWearHistory(userId: string): Promise<WearEntry[]> {
     const outfit = byId.get(l.outfitId);
     return outfit ? [{ id: l.id, wornOn: l.wornOn, outfit }] : [];
   });
+}
+
+/** Counts of starter-library items the user has hidden (drives the "restore" control). */
+export async function countHiddenStarter(userId: string): Promise<{ outfits: number; combos: number }> {
+  const [o, c] = await Promise.all([
+    db.select({ n: sql<number>`count(*)::int` }).from(hiddenOutfits).where(eq(hiddenOutfits.userId, userId)),
+    db.select({ n: sql<number>`count(*)::int` }).from(hiddenCombos).where(eq(hiddenCombos.userId, userId)),
+  ]);
+  return { outfits: o[0]?.n ?? 0, combos: c[0]?.n ?? 0 };
 }

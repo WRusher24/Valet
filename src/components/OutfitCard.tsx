@@ -5,6 +5,7 @@ import { ConfirmSubmit } from "./ConfirmSubmit";
 import { FavoriteButton } from "./FavoriteButton";
 import { OutfitImage } from "./OutfitImage";
 import { SeasonTag } from "./SeasonTag";
+import { ReplacePhoto } from "./ReplacePhoto";
 import { WearButton } from "./WearButton";
 import Link from "next/link";
 
@@ -63,12 +64,21 @@ export function OutfitCard({ outfit, highlight, showComboLink = false, priority 
           <WearButton outfitId={outfit.id} />
         </div>
 
-        {outfit.isOwn && (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-charcoal/10 pt-3">
+          <ReplacePhoto outfitId={outfit.id} isOwn={outfit.isOwn} />
           <form action={deleteOutfitAction}>
             <input type="hidden" name="outfitId" value={outfit.id} />
-            <ConfirmSubmit message="Delete this outfit photo? This can't be undone.">Delete photo</ConfirmSubmit>
+            <ConfirmSubmit
+              message={
+                outfit.isOwn
+                  ? "Delete this outfit and its photo? This can't be undone."
+                  : "Remove this starter outfit from your lookbook?"
+              }
+            >
+              Delete photo
+            </ConfirmSubmit>
           </form>
-        )}
+        </div>
       </div>
     </article>
   );

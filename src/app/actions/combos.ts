@@ -3,11 +3,11 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { del } from "@vercel/blob";
 import { z } from "zod";
 import { db } from "@/db";
-import { comboColors, combos, outfits } from "@/db/schema";
+import { comboColors, combos, hiddenCombos, outfits } from "@/db/schema";
 import { COLOR_FAMILIES, HEX_RE, parseSeasonFilter, SEASONS } from "@/lib/constants";
 import { pickRandomComboId, UUID_RE } from "@/lib/queries";
 import { getUserOrNull } from "@/lib/session";
@@ -81,6 +81,15 @@ export async function deleteComboAction(formData: FormData): Promise<void> {
   if (deleted.length > 0) {
     const urls = owned.map((o) => o.imageUrl).filter(isBlobUrl);
     if (urls.length > 0) await del(urls).catch(() => undefined);
+  }
+  if (deleted.length === 0) {
+    // Not owned: if it's a starter combo, hide it from this user's view only.
+    const starter = await db
+      .select({ id: combos.id })
+      .from(combos)
+      .where(and(eq(combos.id, id), isNull(combos.userId)))
+      .limit(1);
+    if (starter[0]) await db.insert(hiddenCombos).values({ userId: user.id, comboId: id }).onConflictDoNothing();
   }
   revalidatePath("/", "layout");
   redirect("/");

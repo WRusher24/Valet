@@ -38,9 +38,9 @@ export default async function ComboPage({ params }: { params: Promise<{ id: stri
           </div>
           <h1 className="mt-3 text-3xl leading-tight !text-white sm:text-4xl">{combo.title}</h1>
           {combo.description && <p className="mt-2 max-w-xl text-sm text-white/70">{combo.description}</p>}
-          <div className="mt-6 flex flex-wrap items-start gap-5 rounded-2xl bg-white px-5 py-5">
+          <div className="mt-6 flex items-stretch gap-3 rounded-2xl bg-white p-4">
             {combo.colors.map((c, i) => (
-              <Swatch key={`${c.hex}-${i}`} color={c} size="lg" />
+              <Swatch key={`${c.hex}-${i}`} color={c} size="hero" />
             ))}
           </div>
           {lastWorn && <p className="mt-4 text-xs text-white/70">Last worn in this palette: {formatDate(lastWorn)}</p>}
@@ -66,14 +66,18 @@ export default async function ComboPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
 
-        {combo.isOwn && (
-          <form action={deleteComboAction} className="mt-10 border-t border-charcoal/15 pt-5">
-            <input type="hidden" name="comboId" value={combo.id} />
-            <ConfirmSubmit message="Delete this combination and all of its uploaded photos? This can't be undone.">
-              Delete this combination
-            </ConfirmSubmit>
-          </form>
-        )}
+        <form action={deleteComboAction} className="mt-10 border-t border-charcoal/15 pt-5">
+          <input type="hidden" name="comboId" value={combo.id} />
+          <ConfirmSubmit
+            message={
+              combo.isOwn
+                ? "Delete this combination and all of its uploaded photos? This can't be undone."
+                : "Remove this starter combination from your lookbook?"
+            }
+          >
+            Delete this combination
+          </ConfirmSubmit>
+        </form>
       </div>
     </main>
   );

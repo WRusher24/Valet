@@ -8,6 +8,13 @@
       "when": 1794593694317,
       "tag": "0000_familiar_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794595694426,
+      "tag": "0001_yielding_emma_frost",
+      "breakpoints": true
     }
   ]
 }

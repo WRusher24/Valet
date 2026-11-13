@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { prepareImage } from "@/lib/image";
 import { useEffect, useState } from "react";
 import {
   COLOR_FAMILIES,
@@ -23,34 +24,6 @@ interface ComboOption {
 interface PieceDraft {
   family: ColorFamily | "";
   description: string;
-}
-
-const MAX_BYTES = 4 * 1024 * 1024;
-const MAX_EDGE = 1600;
-
-/** Downscales large phone photos so they stay under the serverless body limit. */
-async function prepare(file: File): Promise<File> {
-  try {
-    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-    const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-    if (scale === 1 && file.size <= 2.5 * 1024 * 1024 && /^image\/(jpeg|png|webp)$/.test(file.type)) {
-      bitmap.close();
-      return file;
-    }
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("no canvas");
-    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    bitmap.close();
-    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.86));
-    if (!blob) throw new Error("encode failed");
-    return new File([blob], "outfit.jpg", { type: "image/jpeg" });
-  } catch {
-    if (/^image\/(jpeg|png|webp)$/.test(file.type) && file.size <= MAX_BYTES) return file;
-    throw new Error("We couldn't read that photo. Please use a JPEG, PNG or WebP image under 4 MB.");
-  }
 }
 
 export function OutfitUploader({ combos, defaultComboId }: { combos: ComboOption[]; defaultComboId?: string }) {
@@ -94,7 +67,7 @@ export function OutfitUploader({ combos, defaultComboId }: { combos: ComboOption
 
     setBusy(true);
     try {
-      const upload = await prepare(file);
+      const upload = await prepareImage(file);
       const body = new FormData();
       body.set("file", upload);
       body.set("meta", JSON.stringify({ comboId, title, season, items }));

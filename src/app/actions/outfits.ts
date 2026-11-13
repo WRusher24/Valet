@@ -5,7 +5,7 @@ import { and, eq, isNull, or } from "drizzle-orm";
 import { del } from "@vercel/blob";
 import { z } from "zod";
 import { db } from "@/db";
-import { favorites, outfits, wearLogs } from "@/db/schema";
+import { favorites, hiddenCombos, hiddenOutfits, outfits, wearLogs } from "@/db/schema";
 import { getUserOrNull } from "@/lib/session";
 import { isBlobUrl } from "@/lib/blob";
 import { UUID_RE } from "@/lib/queries";
@@ -89,12 +89,12 @@ export async function deleteWearLogAction(formData: FormData): Promise<void> {
   revalidatePath("/", "layout");
 }
 
+/** Own photos are deleted for good; starter photos are removed from this user's view only. */
 export async function deleteOutfitAction(formData: FormData): Promise<void> {
   const user = await getUserOrNull();
   if (!user) return;
   const id = String(formData.get("outfitId") ?? "");
   if (!UUID_RE.test(id)) return;
-  // Only the owner can delete; curated outfits (user_id NULL) never match.
   const deleted = await db
     .delete(outfits)
     .where(and(eq(outfits.id, id), eq(outfits.userId, user.id)))
@@ -102,5 +102,36 @@ export async function deleteOutfitAction(formData: FormData): Promise<void> {
   for (const row of deleted) {
     if (isBlobUrl(row.imageUrl)) await del(row.imageUrl).catch(() => undefined);
   }
+  if (deleted.length === 0) {
+    const starter = await db
+      .select({ id: outfits.id })
+      .from(outfits)
+      .where(and(eq(outfits.id, id), isNull(outfits.userId)))
+      .limit(1);
+    if (starter[0]) await db.insert(hiddenOutfits).values({ userId: user.id, outfitId: id }).onConflictDoNothing();
+  }
+  revalidatePath("/", "layout");
+}
+
+/** Removes every starter-library photo from this user's view (their own uploads are untouched). */
+export async function hideAllStarterPhotosAction(): Promise<void> {
+  const user = await getUserOrNull();
+  if (!user) return;
+  const starters = await db.select({ id: outfits.id }).from(outfits).where(isNull(outfits.userId));
+  if (starters.length > 0) {
+    await db
+      .insert(hiddenOutfits)
+      .values(starters.map((o) => ({ userId: user.id, outfitId: o.id })))
+      .onConflictDoNothing();
+  }
+  revalidatePath("/", "layout");
+}
+
+/** Brings back every starter photo and combination this user previously removed. */
+export async function restoreStarterLibraryAction(): Promise<void> {
+  const user = await getUserOrNull();
+  if (!user) return;
+  await db.delete(hiddenOutfits).where(eq(hiddenOutfits.userId, user.id));
+  await db.delete(hiddenCombos).where(eq(hiddenCombos.userId, user.id));
   revalidatePath("/", "layout");
 }

@@ -109,7 +109,7 @@ export default async function ByItemPage({
                 <div className="no-scrollbar -mx-4 mt-3 flex gap-4 overflow-x-auto px-4 pb-2">
                   {results.combos.map((c) => (
                     <div key={c.id} className="w-72 shrink-0">
-                      <ComboCard combo={c} />
+                      <ComboCard combo={c} compact />
                     </div>
                   ))}
                 </div>

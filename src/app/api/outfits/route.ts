@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { and, eq, isNull, or } from "drizzle-orm";
-import { del, put } from "@vercel/blob";
+import { del } from "@vercel/blob";
+import { storeImage } from "@/lib/upload";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/db";
@@ -12,8 +13,6 @@ import { UUID_RE } from "@/lib/queries";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-
-const MAX_BYTES = 4 * 1024 * 1024; // Vercel serverless request bodies are capped at 4.5 MB.
 
 const metaSchema = z.object({
   comboId: z.string().regex(UUID_RE, "Choose a colour combination."),
@@ -31,15 +30,6 @@ const metaSchema = z.object({
     .max(4),
 });
 
-function detectImage(b: Uint8Array): { ext: string; type: string } | null {
-  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return { ext: "jpg", type: "image/jpeg" };
-  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return { ext: "png", type: "image/png" };
-  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) {
-    return { ext: "webp", type: "image/webp" };
-  }
-  return null;
-}
-
 const fail = (error: string, status: number) => NextResponse.json({ ok: false, error }, { status });
 
 export async function POST(request: Request) {
@@ -47,20 +37,12 @@ export async function POST(request: Request) {
   const userId = session?.user?.id;
   if (!userId) return fail("Your session has expired. Please sign in again.", 401);
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return fail("Photo uploads aren't configured yet. Add BLOB_READ_WRITE_TOKEN to the environment.", 503);
-  }
-
   let form: FormData;
   try {
     form = await request.formData();
   } catch {
     return fail("The upload could not be read. Please try again.", 400);
   }
-
-  const file = form.get("file");
-  if (!(file instanceof File) || file.size === 0) return fail("Choose a photo to upload.", 400);
-  if (file.size > MAX_BYTES) return fail("That photo is too large. Please use an image under 4 MB.", 413);
 
   let metaRaw: unknown;
   try {
@@ -80,21 +62,9 @@ export async function POST(request: Request) {
     .limit(1);
   if (!combo) return fail("That colour combination could not be found.", 404);
 
-  const buffer = new Uint8Array(await file.arrayBuffer());
-  const image = detectImage(buffer);
-  if (!image) return fail("Only JPEG, PNG or WebP photos are supported.", 415);
-
-  let blobUrl: string;
-  try {
-    const blob = await put(`outfits/${userId}/${randomUUID()}.${image.ext}`, Buffer.from(buffer), {
-      access: "public",
-      contentType: image.type,
-      addRandomSuffix: true,
-    });
-    blobUrl = blob.url;
-  } catch {
-    return fail("The photo could not be stored. Please try again.", 502);
-  }
+  const stored = await storeImage(userId, form.get("file"));
+  if (!stored.ok) return fail(stored.error, stored.status);
+  const blobUrl = stored.url;
 
   const outfitId = randomUUID();
   try {
