@@ -32,7 +32,13 @@ export async function storeImage(userId: string, file: unknown): Promise<StoreRe
       addRandomSuffix: true,
     });
     return { ok: true, url: blob.url };
-  } catch {
-    return { ok: false, status: 502, error: "The photo could not be stored. Please try again." };
+  } catch (err) {
+    console.error("Vercel Blob upload failed:", err);
+    const detail = err instanceof Error ? err.message.replace(/vercel_blob_rw_\w+/g, "[token]").slice(0, 240) : "";
+    return {
+      ok: false,
+      status: 502,
+      error: `The photo could not be stored.${detail ? ` Storage said: ${detail}` : ""}`,
+    };
   }
 }
