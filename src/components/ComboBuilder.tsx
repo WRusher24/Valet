@@ -18,16 +18,28 @@ interface Draft {
   hex: string;
   family: ColorFamily;
   familyTouched: boolean;
+  /** What the user is typing in the hex field (may be incomplete/invalid). */
+  hexText: string;
+}
+
+/** Accepts "#1B263B", "1b263b", "#abc" or "abc" and returns "#RRGGBB" (or null). */
+function normalizeHex(input: string): string | null {
+  const v = input.trim().replace(/^#/, "");
+  if (/^[0-9a-fA-F]{3}$/.test(v)) {
+    return `#${v.split("").map((ch) => ch + ch).join("")}`.toUpperCase();
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(v)) return `#${v}`.toUpperCase();
+  return null;
 }
 
 const INITIAL: Draft[] = [
-  { name: "Navy", hex: "#1B263B", family: "blues", familyTouched: false },
-  { name: "Camel", hex: "#C19A6B", family: "browns", familyTouched: false },
+  { name: "Navy", hex: "#1B263B", family: "blues", familyTouched: false, hexText: "#1B263B" },
+  { name: "Camel", hex: "#C19A6B", family: "browns", familyTouched: false, hexText: "#C19A6B" },
 ];
 
 const EXTRA: Draft[] = [
-  { name: "Crisp White", hex: "#FFFFFF", family: "whites", familyTouched: false },
-  { name: "Charcoal", hex: "#36454F", family: "greys", familyTouched: false },
+  { name: "Crisp White", hex: "#FFFFFF", family: "whites", familyTouched: false, hexText: "#FFFFFF" },
+  { name: "Charcoal", hex: "#36454F", family: "greys", familyTouched: false, hexText: "#36454F" },
 ];
 
 export function ComboBuilder() {
@@ -56,6 +68,11 @@ export function ComboBuilder() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const bad = colors.findIndex((c) => normalizeHex(c.hexText) === null);
+    if (bad !== -1) {
+      setError(`Colour ${bad + 1} has an invalid colour code.`);
+      return;
+    }
     startTransition(async () => {
       const result = await createComboAction({
         season,
@@ -106,7 +123,7 @@ export function ComboBuilder() {
                   value={c.hex}
                   onChange={(e) => {
                     const hex = e.target.value.toUpperCase();
-                    update(i, { hex, ...(c.familyTouched ? {} : { family: suggestFamilyFromHex(hex) }) });
+                    update(i, { hex, hexText: hex, ...(c.familyTouched ? {} : { family: suggestFamilyFromHex(hex) }) });
                   }}
                   className="absolute inset-0 h-full w-full scale-150"
                 />
@@ -126,7 +143,33 @@ export function ComboBuilder() {
                 />
               </div>
             </div>
-            <p className="mt-2 text-[11px] uppercase tracking-wide text-charcoal/60">{c.hex}</p>
+            <label htmlFor={`hex-${i}`} className="label mt-3">
+              Colour code (hex)
+            </label>
+            <input
+              id={`hex-${i}`}
+              value={c.hexText}
+              onChange={(e) => {
+                const text = e.target.value;
+                const hex = normalizeHex(text);
+                update(i, {
+                  hexText: text,
+                  ...(hex ? { hex, ...(c.familyTouched ? {} : { family: suggestFamilyFromHex(hex) }) } : {}),
+                });
+              }}
+              onBlur={() => update(i, { hexText: normalizeHex(c.hexText) ?? c.hex })}
+              inputMode="text"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={7}
+              placeholder="#1B263B"
+              aria-invalid={normalizeHex(c.hexText) === null}
+              className={`field font-mono uppercase ${normalizeHex(c.hexText) === null ? "!border-red-700" : ""}`}
+            />
+            {normalizeHex(c.hexText) === null && (
+              <p className="mt-1 text-xs text-red-800">Enter a 6-digit code like #1B263B (or 3 digits like #FFF).</p>
+            )}
             <label htmlFor={`family-${i}`} className="label mt-3">
               Colour family
             </label>
