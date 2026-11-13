@@ -11,7 +11,7 @@ import { comboColors, combos, hiddenCombos, outfits } from "@/db/schema";
 import { COLOR_FAMILIES, HEX_RE, parseSeasonFilter, SEASONS } from "@/lib/constants";
 import { pickRandomComboId, UUID_RE } from "@/lib/queries";
 import { getUserOrNull } from "@/lib/session";
-import { isBlobUrl } from "@/lib/blob";
+import { blobDeleteTarget } from "@/lib/blob";
 
 const createComboSchema = z.object({
   season: z.enum(SEASONS),
@@ -79,7 +79,7 @@ export async function deleteComboAction(formData: FormData): Promise<void> {
     .where(and(eq(combos.id, id), eq(combos.userId, user.id)))
     .returning({ id: combos.id });
   if (deleted.length > 0) {
-    const urls = owned.map((o) => o.imageUrl).filter(isBlobUrl);
+    const urls = owned.flatMap((o) => blobDeleteTarget(o.imageUrl) ?? []);
     if (urls.length > 0) await del(urls).catch(() => undefined);
   }
   if (deleted.length === 0) {

@@ -6,7 +6,7 @@ import { del } from "@vercel/blob";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { hiddenOutfits, outfitItems, outfits } from "@/db/schema";
-import { isBlobUrl } from "@/lib/blob";
+import { blobDeleteTarget } from "@/lib/blob";
 import { UUID_RE } from "@/lib/queries";
 import { storeImage } from "@/lib/upload";
 
@@ -49,7 +49,8 @@ export async function POST(request: Request) {
   try {
     if (outfit.userId === userId) {
       await db.update(outfits).set({ imageUrl: stored.url }).where(and(eq(outfits.id, outfit.id), eq(outfits.userId, userId)));
-      if (isBlobUrl(outfit.imageUrl)) await del(outfit.imageUrl).catch(() => undefined);
+      const old = blobDeleteTarget(outfit.imageUrl);
+      if (old) await del(old).catch(() => undefined);
     } else {
       const items = await db.select().from(outfitItems).where(eq(outfitItems.outfitId, outfit.id));
       const copyId = randomUUID();
@@ -75,7 +76,8 @@ export async function POST(request: Request) {
       ]);
     }
   } catch {
-    await del(stored.url).catch(() => undefined);
+    const created = blobDeleteTarget(stored.url);
+    if (created) await del(created).catch(() => undefined);
     return fail("The photo could not be saved. Please try again.", 500);
   }
 

@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { and, eq, isNull, or } from "drizzle-orm";
 import { del } from "@vercel/blob";
+import { blobDeleteTarget } from "@/lib/blob";
 import { storeImage } from "@/lib/upload";
 import { z } from "zod";
 import { auth } from "@/auth";
@@ -89,7 +90,8 @@ export async function POST(request: Request) {
       ),
     ]);
   } catch {
-    await del(blobUrl).catch(() => undefined);
+    const created = blobDeleteTarget(blobUrl);
+    if (created) await del(created).catch(() => undefined);
     return fail("The outfit could not be saved. Please try again.", 500);
   }
 

@@ -72,6 +72,8 @@ Any photo that cannot load is replaced in the UI by a palette-striped placeholde
 BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
 ```
 
+Both **public** and **private** Blob stores are supported. The app detects the store's mode automatically (set `BLOB_ACCESS=public` or `BLOB_ACCESS=private` to force one). Private-store photos are streamed through `/api/photos/...`, which only serves a photo to the user who uploaded it.
+
 Uploads are limited to 4 MB per photo (a Vercel serverless request limit). The upload form automatically downsizes large phone photos in the browser before sending them.
 
 ## 6. Run locally

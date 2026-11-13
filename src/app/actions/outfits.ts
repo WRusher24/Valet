@@ -7,7 +7,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { favorites, hiddenCombos, hiddenOutfits, outfits, wearLogs } from "@/db/schema";
 import { getUserOrNull } from "@/lib/session";
-import { isBlobUrl } from "@/lib/blob";
+import { blobDeleteTarget } from "@/lib/blob";
 import { UUID_RE } from "@/lib/queries";
 
 export type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -100,7 +100,8 @@ export async function deleteOutfitAction(formData: FormData): Promise<void> {
     .where(and(eq(outfits.id, id), eq(outfits.userId, user.id)))
     .returning({ imageUrl: outfits.imageUrl });
   for (const row of deleted) {
-    if (isBlobUrl(row.imageUrl)) await del(row.imageUrl).catch(() => undefined);
+    const target = blobDeleteTarget(row.imageUrl);
+    if (target) await del(target).catch(() => undefined);
   }
   if (deleted.length === 0) {
     const starter = await db
