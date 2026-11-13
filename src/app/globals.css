@@ -1,0 +1,64 @@
+@import "@fontsource-variable/playfair-display";
+@import "@fontsource-variable/inter";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    background: #ffffff;
+  }
+  body {
+    @apply bg-canvas font-sans text-charcoal antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-display text-obsidian;
+  }
+  :focus-visible {
+    outline: 2px solid #9a8174;
+    outline-offset: 2px;
+  }
+  input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 9999px; }
+  input[type="color"]::-moz-color-swatch { border: 0; border-radius: 9999px; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-obsidian px-6 py-3 text-sm font-medium tracking-wide text-white transition active:scale-[0.98] disabled:opacity-50;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-charcoal/30 bg-white px-5 py-2.5 text-sm font-medium text-charcoal transition active:scale-[0.98] disabled:opacity-50;
+  }
+  .pill {
+    @apply inline-flex shrink-0 items-center gap-2 rounded-full border border-charcoal/20 bg-white px-4 py-2 text-sm text-charcoal transition;
+  }
+  .pill-active {
+    @apply border-obsidian bg-obsidian text-white;
+  }
+  .tag {
+    @apply inline-flex items-center rounded-full border border-bronze px-2.5 py-1 text-[10px] font-medium uppercase tracking-editorial text-bronze;
+  }
+  .field {
+    @apply w-full rounded-xl border border-charcoal/25 bg-white px-4 py-3 text-base text-charcoal placeholder:text-charcoal/40;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-editorial text-charcoal/70;
+  }
+  .hairline {
+    @apply border-t border-charcoal/15;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
