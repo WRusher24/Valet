@@ -95,7 +95,7 @@ npm run lint && npm run build
    - `AUTH_SECRET`
    - `BLOB_READ_WRITE_TOKEN` (added automatically if you connected a Blob store)
 4. Click **Deploy**.
-5. Run the schema and seed against the production database once (from your machine, with `DATABASE_URL` pointing at it):
+5. The `vercel-build` script automatically applies the committed migrations and loads the starter lookbook on every deploy (both steps are idempotent). You only need to run the commands below manually for local development, or if you set a custom Build Command in Vercel:
 
 ```bash
 npm run db:push && npm run db:seed

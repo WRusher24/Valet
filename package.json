@@ -13,7 +13,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
-    "db:check-images": "tsx scripts/check-images.ts"
+    "db:check-images": "tsx scripts/check-images.ts",
+    "db:setup": "tsx scripts/migrate.ts && tsx scripts/seed.ts",
+    "vercel-build": "npm run db:setup && next build"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

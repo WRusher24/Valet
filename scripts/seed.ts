@@ -11,7 +11,10 @@ config({ path: ".env" });
 
 async function main() {
   const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set.");
+  if (!url) {
+    console.log("DATABASE_URL is not set — skipping seed.");
+    return;
+  }
   const db = drizzle(neon(url), { schema });
   const reset = process.argv.includes("--reset");
 
