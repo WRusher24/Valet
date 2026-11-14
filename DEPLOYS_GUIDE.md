@@ -129,3 +129,9 @@ My Closet adds three tables (`wardrobe_items`, `closet_outfits`, `closet_outfit_
 - **On Vercel:** nothing to do. The `vercel-build` script applies pending migrations on every deploy.
 - **Locally:** run `npm run db:migrate` (recommended) or `npm run db:push`.
 - Closet photos use the same Vercel Blob store as outfit photos (stored under `closet/<user id>/`) and need `BLOB_READ_WRITE_TOKEN`. Private stores are supported automatically.
+
+### Colour-family update (migration 0003)
+
+Closet items now use 10 colour families (`browns_tan`, `beige_khaki`, `stone_sand`, `blues`, `greys`, `greens`, `whites_creams`, `blacks`, `burgundy_reds`, `yellows_brights`). Migration `0003` converts existing items safely: `browns` becomes `browns_tan` and the retired `pastels_other` becomes `yellows_brights`; every other family keeps its name. Existing items in other families may deserve a re-check in the edit form (for example, change a beige chino from Browns & Tan to Beige & Khaki). Vercel applies the migration automatically on deploy; locally run `npm run db:migrate`.
+
+The lookbook's own 8-family tagging (By Item tab) is unchanged; closet families map onto it when matching (Stone & Sand matches both Whites & Creams and Greys, Beige & Khaki matches Browns, Yellows & Brights matches Pastels & Other).

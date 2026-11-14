@@ -1,4 +1,4 @@
-import { FAMILY_META, type ColorFamily } from "./constants";
+import type { ColorFamily } from "./constants";
 
 export const WARDROBE_CATEGORIES = ["top", "bottom", "outerwear", "shoes", "belt", "watch", "bracelet"] as const;
 export type WardrobeCategory = (typeof WARDROBE_CATEGORIES)[number];
@@ -40,16 +40,18 @@ export function parseClosetFilter(v: string | string[] | undefined): ClosetFilte
   return isWardrobeCategory(v) ? v : "all";
 }
 
-/** Colour families as stored on wardrobe items. */
+/** The 10 dedicated colour families stored on wardrobe items. */
 export const WARDROBE_FAMILIES = [
-  "browns",
+  "browns_tan",
+  "beige_khaki",
+  "stone_sand",
   "blues",
   "greys",
   "greens",
   "whites_creams",
   "blacks",
   "burgundy_reds",
-  "pastels_other",
+  "yellows_brights",
 ] as const;
 export type WardrobeFamily = (typeof WARDROBE_FAMILIES)[number];
 
@@ -57,28 +59,91 @@ export function isWardrobeFamily(v: unknown): v is WardrobeFamily {
   return typeof v === "string" && (WARDROBE_FAMILIES as readonly string[]).includes(v);
 }
 
-const TO_LOOKBOOK: Record<WardrobeFamily, ColorFamily> = {
-  browns: "browns",
-  blues: "blues",
-  greys: "greys",
-  greens: "greens",
-  whites_creams: "whites",
-  blacks: "blacks",
-  burgundy_reds: "reds",
-  pastels_other: "pastels",
+export const WARDROBE_FAMILY_META: Record<
+  WardrobeFamily,
+  { label: string; hex: string; shades: string[]; lookbook: readonly ColorFamily[] }
+> = {
+  browns_tan: {
+    label: "Browns & Tan",
+    hex: "#8B5E3C",
+    shades: ["Brown", "Tan", "Cognac", "Chocolate", "Espresso", "Taupe"],
+    lookbook: ["browns"],
+  },
+  beige_khaki: {
+    label: "Beige & Khaki",
+    hex: "#D1BE98",
+    shades: ["Beige", "Khaki"],
+    lookbook: ["browns"],
+  },
+  stone_sand: {
+    label: "Stone & Sand",
+    hex: "#B9B09E",
+    shades: ["Stone", "Sand", "Ecru"],
+    lookbook: ["whites", "greys"],
+  },
+  blues: {
+    label: "Blues",
+    hex: "#2F4A75",
+    shades: ["Navy", "Sky Blue", "Slate", "Chambray", "Cobalt", "Midnight"],
+    lookbook: ["blues"],
+  },
+  greys: {
+    label: "Greys",
+    hex: "#8A8D91",
+    shades: ["Charcoal", "Light Grey", "Heather", "Slate", "Pewter"],
+    lookbook: ["greys"],
+  },
+  greens: {
+    label: "Greens",
+    hex: "#4F6B3F",
+    shades: ["Olive", "Forest Green", "Sage", "Hunter", "Moss"],
+    lookbook: ["greens"],
+  },
+  whites_creams: {
+    label: "Whites & Creams",
+    hex: "#F3EEE3",
+    shades: ["Pure White", "Off-White", "Ivory"],
+    lookbook: ["whites"],
+  },
+  blacks: {
+    label: "Blacks",
+    hex: "#111111",
+    shades: ["Jet Black", "Washed Black", "Obsidian"],
+    lookbook: ["blacks"],
+  },
+  burgundy_reds: {
+    label: "Burgundy & Reds",
+    hex: "#7A1F2B",
+    shades: ["Burgundy", "Maroon", "Oxblood", "Rust", "Terracotta"],
+    lookbook: ["reds"],
+  },
+  yellows_brights: {
+    label: "Yellows & Brights",
+    hex: "#E3B505",
+    shades: ["Yellow", "Mustard", "Ochre", "vibrant accents"],
+    lookbook: ["pastels"],
+  },
 };
 
-/** Maps a closet colour family onto the lookbook's family vocabulary. */
-export function toLookbookFamily(f: WardrobeFamily): ColorFamily {
-  return TO_LOOKBOOK[f];
+/** Lookbook families a closet family corresponds to (stone & sand spans two lookbook groups). */
+export function toLookbookFamilies(f: WardrobeFamily): readonly ColorFamily[] {
+  return WARDROBE_FAMILY_META[f].lookbook;
 }
 
 export function familyLabel(f: WardrobeFamily): string {
-  return FAMILY_META[TO_LOOKBOOK[f]].label;
+  return WARDROBE_FAMILY_META[f].label;
 }
 
 export function familyHex(f: WardrobeFamily): string {
-  return FAMILY_META[TO_LOOKBOOK[f]].hex;
+  return WARDROBE_FAMILY_META[f].hex;
+}
+
+export function familyShades(f: WardrobeFamily): string {
+  return WARDROBE_FAMILY_META[f].shades.join(", ");
+}
+
+export function parseWardrobeFamilyFilter(v: string | string[] | undefined): WardrobeFamily | null {
+  return isWardrobeFamily(v) ? v : null;
 }
 
 export interface PaletteColor {
@@ -94,7 +159,7 @@ export function paletteOf(items: readonly { colorFamily: WardrobeFamily }[]): Pa
   for (const { colorFamily } of items) {
     if (seen.has(colorFamily)) continue;
     seen.add(colorFamily);
-    out.push({ name: familyLabel(colorFamily), hex: familyHex(colorFamily), family: toLookbookFamily(colorFamily) });
+    out.push({ name: familyLabel(colorFamily), hex: familyHex(colorFamily), family: toLookbookFamilies(colorFamily)[0] ?? "greys" });
   }
   return out;
 }
@@ -103,16 +168,17 @@ export function paletteOf(items: readonly { colorFamily: WardrobeFamily }[]): Pa
 /* Colour harmony                                                      */
 /* ------------------------------------------------------------------ */
 
-const NEUTRALS: ReadonlySet<WardrobeFamily> = new Set(["blacks", "whites_creams", "greys"]);
+/** Neutrals and earth tones pair with everything. */
+const NEUTRALS: ReadonlySet<WardrobeFamily> = new Set(["blacks", "whites_creams", "greys", "beige_khaki", "stone_sand"]);
 
 const PAIRINGS: readonly (readonly [WardrobeFamily, WardrobeFamily])[] = [
-  ["browns", "blues"],
-  ["browns", "greens"],
-  ["browns", "burgundy_reds"],
-  ["browns", "pastels_other"],
+  ["browns_tan", "blues"],
+  ["browns_tan", "greens"],
+  ["browns_tan", "burgundy_reds"],
+  ["browns_tan", "yellows_brights"],
   ["blues", "burgundy_reds"],
-  ["blues", "pastels_other"],
-  ["greens", "pastels_other"],
+  ["blues", "yellows_brights"],
+  ["greens", "yellows_brights"],
 ];
 
 const PAIR_SET: ReadonlySet<string> = new Set(PAIRINGS.flatMap(([a, b]) => [`${a}|${b}`, `${b}|${a}`]));
@@ -136,7 +202,7 @@ export function pairScore(
   if (isBeltShoes) {
     // Classic rule: belt matches shoes.
     if (famA === famB) score += 3;
-    else if ((famA === "browns" || famA === "blacks") && (famB === "browns" || famB === "blacks")) score -= 3;
+    else if ((famA === "browns_tan" || famA === "blacks") && (famB === "browns_tan" || famB === "blacks")) score -= 3;
   }
   return score;
 }

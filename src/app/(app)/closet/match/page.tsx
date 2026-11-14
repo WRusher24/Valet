@@ -11,11 +11,15 @@ import {
   familiesCompatible,
   familyHex,
   familyLabel,
-  toLookbookFamily,
+  toLookbookFamilies,
+  parseWardrobeFamilyFilter,
+  familyShades,
+  WARDROBE_FAMILIES,
   type WardrobeCategory,
+  type WardrobeFamily,
 } from "@/lib/closet";
 import { uuidSchema } from "@/lib/closet-schema";
-import { listItems, listOutfitsUsingItem, type ClosetItem } from "@/lib/closet-queries";
+import { countItemsByFamily, listItems, listOutfitsUsingItem, type ClosetItem } from "@/lib/closet-queries";
 import type { GarmentSlot } from "@/lib/constants";
 import { filterByItem, listCombosWithFamily, type ComboSummary, type OutfitView } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
@@ -33,11 +37,14 @@ const LOOKBOOK_SLOT: Record<WardrobeCategory, GarmentSlot | null> = {
   bracelet: null,
 };
 
-export default async function MatchPage({ searchParams }: { searchParams: Promise<{ item?: string }> }) {
+export default async function MatchPage({ searchParams }: { searchParams: Promise<{ item?: string; family?: string }> }) {
   const user = await requireUser();
-  const parsed = uuidSchema.safeParse((await searchParams).item);
-  const items = await listItems(user.id);
+  const sp = await searchParams;
+  const parsed = uuidSchema.safeParse(sp.item);
+  const familyFilter = parseWardrobeFamilyFilter(sp.family);
+  const [items, familyCounts] = await Promise.all([listItems(user.id), countItemsByFamily(user.id)]);
   const selected = parsed.success ? items.find((i) => i.id === parsed.data) : undefined;
+  const visible = familyFilter ? items.filter((i) => i.colorFamily === familyFilter) : items;
 
   return (
     <main>
@@ -53,7 +60,10 @@ export default async function MatchPage({ searchParams }: { searchParams: Promis
             <Link href="/closet/items/new" className="btn-primary mt-5">+ Add your first item</Link>
           </div>
         ) : (
-          <Picker items={items} selectedId={selected?.id} />
+          <>
+            <FamilyFilter active={familyFilter} counts={familyCounts} selectedId={selected?.id} />
+            <Picker items={visible} selectedId={selected?.id} family={familyFilter} />
+          </>
         )}
         {selected && <Results userId={user.id} selected={selected} items={items} />}
         {!selected && items.length > 0 && (
@@ -66,8 +76,52 @@ export default async function MatchPage({ searchParams }: { searchParams: Promis
   );
 }
 
-function Picker({ items, selectedId }: { items: ClosetItem[]; selectedId: string | undefined }) {
+function matchHref(family: WardrobeFamily | null, item?: string): string {
+  const q = new URLSearchParams();
+  if (family) q.set("family", family);
+  if (item) q.set("item", item);
+  const qs = q.toString();
+  return qs ? `/closet/match?${qs}` : "/closet/match";
+}
+
+function FamilyFilter({
+  active,
+  counts,
+  selectedId,
+}: {
+  active: WardrobeFamily | null;
+  counts: Record<WardrobeFamily | "all", number>;
+  selectedId: string | undefined;
+}) {
+  return (
+    <section aria-label="Colour family">
+      <h2 className="label">Colour family</h2>
+      <nav className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 py-1">
+        <Link href={matchHref(null, selectedId)} aria-current={active === null ? "page" : undefined} className={`pill ${active === null ? "pill-active" : ""}`}>
+          All <span className="text-[11px] opacity-60">{counts.all}</span>
+        </Link>
+        {WARDROBE_FAMILIES.map((f) => (
+          <Link key={f} href={matchHref(f, selectedId)} aria-current={active === f ? "page" : undefined} className={`pill ${active === f ? "pill-active" : ""}`}>
+            <span className="h-4 w-4 shrink-0 rounded-full border border-bronze" style={{ backgroundColor: familyHex(f) }} aria-hidden />
+            {familyLabel(f)}
+            <span className="text-[11px] opacity-60">{counts[f]}</span>
+          </Link>
+        ))}
+      </nav>
+      {active && <p className="mt-1 text-xs text-charcoal/60">Includes {familyShades(active)}.</p>}
+    </section>
+  );
+}
+
+function Picker({ items, selectedId, family }: { items: ClosetItem[]; selectedId: string | undefined; family: WardrobeFamily | null }) {
   const groups = OUTFIT_SLOT_ORDER.map((c) => ({ category: c, list: items.filter((i) => i.category === c) })).filter((g) => g.list.length > 0);
+  if (groups.length === 0) {
+    return (
+      <p className="rounded-2xl bg-surface p-6 text-center text-sm text-charcoal/70">
+        No items in this colour family yet. <Link href="/closet/items/new" className="underline">Add one →</Link>
+      </p>
+    );
+  }
   return (
     <section aria-label="Choose an item" className="space-y-4">
       {groups.map(({ category, list }) => (
@@ -79,7 +133,7 @@ function Picker({ items, selectedId }: { items: ClosetItem[]; selectedId: string
               return (
                 <Link
                   key={item.id}
-                  href={`/closet/match?item=${item.id}`}
+                  href={matchHref(family, item.id)}
                   aria-current={active ? "true" : undefined}
                   className={`w-24 shrink-0 overflow-hidden rounded-2xl border bg-white ${active ? "border-obsidian ring-2 ring-obsidian" : "border-charcoal/15"}`}
                 >
@@ -97,7 +151,7 @@ function Picker({ items, selectedId }: { items: ClosetItem[]; selectedId: string
 
 async function Results({ userId, selected, items }: { userId: string; selected: ClosetItem; items: ClosetItem[] }) {
   const slot = LOOKBOOK_SLOT[selected.category];
-  const family = toLookbookFamily(selected.colorFamily);
+  const family = toLookbookFamilies(selected.colorFamily);
 
   const [usedIn, lookbook] = await Promise.all([
     listOutfitsUsingItem(userId, selected.id),

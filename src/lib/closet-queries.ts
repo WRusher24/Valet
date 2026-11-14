@@ -8,6 +8,7 @@ import {
   type ClosetFilter,
   type PaletteColor,
   type WardrobeCategory,
+  WARDROBE_FAMILIES,
   type WardrobeFamily,
 } from "./closet";
 import type { Season } from "./constants";
@@ -40,11 +41,21 @@ const itemColumns = {
 };
 
 /** Every query below filters on `user_id`, so one user can never see another user's closet. */
-export async function listItems(userId: string, filter: ClosetFilter = "all"): Promise<ClosetItem[]> {
+export async function listItems(
+  userId: string,
+  filter: ClosetFilter = "all",
+  family: WardrobeFamily | null = null,
+): Promise<ClosetItem[]> {
   return db
     .select(itemColumns)
     .from(wardrobeItems)
-    .where(and(eq(wardrobeItems.userId, userId), filter === "all" ? undefined : eq(wardrobeItems.category, filter)))
+    .where(
+      and(
+        eq(wardrobeItems.userId, userId),
+        filter === "all" ? undefined : eq(wardrobeItems.category, filter),
+        family ? eq(wardrobeItems.colorFamily, family) : undefined,
+      ),
+    )
     .orderBy(desc(wardrobeItems.createdAt));
 }
 
@@ -132,4 +143,19 @@ export async function listOutfitsUsingItem(userId: string, itemId: string): Prom
     .where(and(eq(closetOutfits.userId, userId), eq(closetOutfitItems.itemId, itemId)))
     .orderBy(desc(closetOutfits.createdAt));
   return hydrate(userId, rows);
+}
+
+/** How many of the user's items sit in each colour family (drives the colour filter pills). */
+export async function countItemsByFamily(userId: string): Promise<Record<WardrobeFamily | "all", number>> {
+  const rows = await db
+    .select({ family: wardrobeItems.colorFamily, n: sql<number>`count(*)::int` })
+    .from(wardrobeItems)
+    .where(eq(wardrobeItems.userId, userId))
+    .groupBy(wardrobeItems.colorFamily);
+  const counts = Object.fromEntries([["all", 0], ...WARDROBE_FAMILIES.map((f) => [f, 0])]) as Record<WardrobeFamily | "all", number>;
+  for (const r of rows) {
+    counts[r.family] = r.n;
+    counts.all += r.n;
+  }
+  return counts;
 }

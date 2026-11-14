@@ -277,12 +277,14 @@ export interface ItemFilterResult {
 export async function filterByItem(
   userId: string,
   slot: GarmentSlot,
-  family: ColorFamily,
+  family: ColorFamily | readonly ColorFamily[],
 ): Promise<ItemFilterResult> {
+  const families = typeof family === "string" ? [family] : [...family];
+  if (families.length === 0) return { combos: [], outfits: [] };
   const matching = db
     .select({ id: outfitItems.outfitId })
     .from(outfitItems)
-    .where(and(eq(outfitItems.slot, slot), eq(outfitItems.family, family)));
+    .where(and(eq(outfitItems.slot, slot), inArray(outfitItems.family, families)));
 
   const rows = await db
     .select(outfitColumns)
@@ -346,7 +348,12 @@ export async function countHiddenStarter(userId: string): Promise<{ outfits: num
 }
 
 /** Visible combinations whose palette contains at least one colour from `family`. */
-export async function listCombosWithFamily(userId: string, family: ColorFamily): Promise<ComboSummary[]> {
+export async function listCombosWithFamily(
+  userId: string,
+  family: ColorFamily | readonly ColorFamily[],
+): Promise<ComboSummary[]> {
+  const families = typeof family === "string" ? [family] : [...family];
+  if (families.length === 0) return [];
   const rows = await db
     .select(comboColumns)
     .from(combos)
@@ -357,7 +364,7 @@ export async function listCombosWithFamily(userId: string, family: ColorFamily):
           db
             .select({ one: sql`1` })
             .from(comboColors)
-            .where(and(eq(comboColors.comboId, combos.id), eq(comboColors.family, family))),
+            .where(and(eq(comboColors.comboId, combos.id), inArray(comboColors.family, families))),
         ),
       ),
     )

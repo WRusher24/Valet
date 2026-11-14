@@ -8,6 +8,7 @@ import {
   WARDROBE_FAMILIES,
   familyHex,
   familyLabel,
+  familyShades,
   type WardrobeCategory,
   type WardrobeFamily,
 } from "@/lib/closet";
@@ -125,7 +126,7 @@ export function ItemForm({ mode, itemId, initial, defaultCategory }: ItemFormPro
 
       <div>
         <span className="label">Colour family</span>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {WARDROBE_FAMILIES.map((f) => (
             <button
               key={f}
@@ -139,6 +140,7 @@ export function ItemForm({ mode, itemId, initial, defaultCategory }: ItemFormPro
             </button>
           ))}
         </div>
+        {family && <p className="mt-2 text-xs text-charcoal/60">Includes {familyShades(family)}.</p>}
       </div>
 
       {error && (

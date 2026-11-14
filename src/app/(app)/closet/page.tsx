@@ -3,8 +3,8 @@ import { ClosetFilter } from "@/components/ClosetFilter";
 import { ClosetItemCard } from "@/components/ClosetItemCard";
 import { ClosetOutfitCard } from "@/components/ClosetOutfitCard";
 import { PageHero } from "@/components/PageHero";
-import { parseClosetFilter } from "@/lib/closet";
-import { countItemsByCategory, listClosetOutfits, listItems } from "@/lib/closet-queries";
+import { parseClosetFilter, parseWardrobeFamilyFilter, type WardrobeFamily } from "@/lib/closet";
+import { countItemsByCategory, countItemsByFamily, listClosetOutfits, listItems } from "@/lib/closet-queries";
 import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "My Closet" };
@@ -12,12 +12,13 @@ export const metadata = { title: "My Closet" };
 export default async function ClosetPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; view?: string }>;
+  searchParams: Promise<{ category?: string; view?: string; family?: string }>;
 }) {
   const user = await requireUser();
   const sp = await searchParams;
   const view = sp.view === "outfits" ? "outfits" : "items";
   const filter = parseClosetFilter(sp.category);
+  const family = parseWardrobeFamilyFilter(sp.family);
 
   return (
     <main>
@@ -40,20 +41,32 @@ export default async function ClosetPage({
           <Link href="/closet" aria-current={view === "items" ? "page" : undefined} className={`pill ${view === "items" ? "pill-active" : ""}`}>Items</Link>
           <Link href="/closet?view=outfits" aria-current={view === "outfits" ? "page" : undefined} className={`pill ${view === "outfits" ? "pill-active" : ""}`}>My Outfits</Link>
         </nav>
-        {view === "items" ? <Items userId={user.id} filter={filter} /> : <Outfits userId={user.id} />}
+        {view === "items" ? <Items userId={user.id} filter={filter} family={family} /> : <Outfits userId={user.id} />}
       </div>
     </main>
   );
 }
 
-async function Items({ userId, filter }: { userId: string; filter: ReturnType<typeof parseClosetFilter> }) {
-  const [items, counts] = await Promise.all([listItems(userId, filter), countItemsByCategory(userId)]);
+async function Items({
+  userId,
+  filter,
+  family,
+}: {
+  userId: string;
+  filter: ReturnType<typeof parseClosetFilter>;
+  family: WardrobeFamily | null;
+}) {
+  const [items, counts, familyCounts] = await Promise.all([
+    listItems(userId, filter, family),
+    countItemsByCategory(userId),
+    countItemsByFamily(userId),
+  ]);
   return (
     <>
-      <ClosetFilter active={filter} counts={counts} />
+      <ClosetFilter active={filter} family={family} counts={counts} familyCounts={familyCounts} />
       {items.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-charcoal/25 bg-surface p-10 text-center">
-          <p className="font-display text-xl text-obsidian">{counts.all === 0 ? "Your closet is empty" : "Nothing in this category yet"}</p>
+          <p className="font-display text-xl text-obsidian">{counts.all === 0 ? "Your closet is empty" : "Nothing matches these filters yet"}</p>
           <p className="mx-auto mt-2 max-w-xs text-sm text-charcoal/70">
             Photograph your tops, bottoms, shoes, belts, watches and bracelets to build outfits from what you actually own.
           </p>

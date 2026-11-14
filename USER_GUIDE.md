@@ -59,10 +59,10 @@ The **Closet** tab turns Valet from inspiration into a tool for what you actuall
 1. Open **Closet → + Add Item**.
 2. Tap **Take photo** (opens the camera on a phone) or **Choose from library**.
 3. Pick a category: Top, Bottom, Outerwear, Shoes, Belt, Watch or Bracelet.
-4. Type a name (for example "Brown Suede Loafers" or "Chronograph Watch") and choose a broad colour family.
+4. Type a name (for example "Brown Suede Loafers" or "Chronograph Watch") and choose one of 10 colour families: Browns & Tan, Beige & Khaki, Stone & Sand, Blues, Greys, Greens, Whites & Creams, Blacks, Burgundy & Reds, or Yellows & Brights. Tap a family to see which shades it covers.
 5. Tap **Add to Closet**. Open any item later to edit its details, swap its photo or delete it.
 
-Use the category pills at the top of the closet (All, Tops, Bottoms, Outerwear, Shoes, Belts, Watches, Bracelets) to filter your inventory.
+Use the category pills at the top of the closet (All, Tops, Bottoms, Outerwear, Shoes, Belts, Watches, Bracelets) and the colour pills underneath to filter your inventory. The two filters combine, so you can see just your beige bottoms or your yellow tops.
 
 ### Build an outfit from your own pieces
 **Closet → Build Outfit** shows your photos for every slot: one top, bottom, pair of shoes, belt, watch and bracelet, plus optional outerwear. Tap a photo to select it, or tap **Smart-fill from my closet** to start from a colour-matched suggestion. The palette at the top updates as you choose. Saved outfits appear under **Closet → My Outfits**, with the exact photos of your pieces next to the palette.
@@ -71,7 +71,7 @@ Use the category pills at the top of the closet (All, Tops, Bottoms, Outerwear, 
 Open **Shuffle → Shuffle from My Closet**, choose a weather filter and tap the button. Valet builds a full outfit from your real items, matching colours (for example, the belt always follows the shoes when it can). Tap **Shuffle again** for another idea or **Save this outfit** to keep it. If a slot is empty, Valet tells you which category to add.
 
 ### Match one piece
-**Closet → Find Matches** (or "Or pick a piece from my closet" on the By Item tab) lets you pick one specific belt, watch, shirt or pair of shoes. You instantly see compatible pieces in your closet, your saved outfits that include it, and lookbook palettes and outfits that suit it.
+**Closet → Find Matches** (or "Or pick a piece from my closet" on the By Item tab) lets you narrow your closet by any of the 10 colour families, then pick one specific belt, watch, shirt or pair of shoes. You instantly see compatible pieces in your closet, your saved outfits that include it, and lookbook palettes and outfits that suit it.
 
 ### Deleting
 Deleting an item also deletes any saved outfit that used it, because an outfit can't have an empty slot. Valet warns you with the number of affected outfits first.
