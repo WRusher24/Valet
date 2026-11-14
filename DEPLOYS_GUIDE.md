@@ -141,3 +141,13 @@ The lookbook's own 8-family tagging (By Item tab) is unchanged; closet families 
 Saved closet outfits now live in `saved_closet_outfits` (one column per slot, an optional `color_combo_id`, `notes`, `season`) and wear logs in `closet_wear_logs`. Migration `0004` creates both tables and **copies every existing closet outfit across**, then `0005` drops the previous `closet_outfits` / `closet_outfit_items` tables. Wardrobe items, starter data and everything else are untouched. Vercel applies both automatically on deploy; locally run `npm run db:migrate`.
 
 Foreign keys: deleting a top, bottom or shoes item deletes the outfits using it; deleting an optional piece (outerwear, belt, watch, bracelet) clears that slot and keeps the outfit; deleting a colour combination keeps the outfit as a standalone one.
+
+### Background removal (on-device)
+
+Wardrobe photos are cut out in the browser with `@imgly/background-removal` (pinned to 1.4.5 together with `@imgly/background-removal-data` 1.4.5). There is no API key and no third-party service at runtime: the model and WASM files are served from this site under `/imgly`.
+
+- `scripts/copy-imgly-assets.mjs` copies the small model (about 44 MB) and the SIMD WASM binary (about 10 MB) from `node_modules/@imgly/background-removal-data` into `public/imgly`. It runs automatically as part of `npm run dev`, `npm run build` and `vercel-build`. `public/imgly` is git-ignored because it is generated.
+- `next.config.mjs` serves `/imgly/*` with `Cache-Control: public, max-age=31536000, immutable`. Cross-origin isolation (COOP/COEP) is deliberately **not** enabled, because it would block cross-origin photos; the engine therefore runs single-threaded WASM, which takes roughly 5–15 seconds per photo on a laptop.
+- `@imgly/background-removal-data` is a devDependency, so your Vercel install step must include dev dependencies (the default).
+- Users download the model once per device (about 55 MB, then cached for a year), so the first cutout is the slowest.
+- If the cutout engine fails, the form tells the user and falls back to uploading the original photo.

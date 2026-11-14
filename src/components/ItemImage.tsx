@@ -12,7 +12,10 @@ interface ItemImageProps {
   className?: string;
 }
 
-/** Square-cropped wardrobe photo with a graceful, icon-free fallback. */
+/**
+ * Wardrobe photo on a warm off-white card. Transparent PNG cutouts sit padded and contained with a
+ * soft shadow; the fallback is icon-free so a failed load never shows a broken-image glyph.
+ */
 export function ItemImage({ src, alt, fallbackLabel, fallbackHex = "#FAF9F6", priority = false, className = "" }: ItemImageProps) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -49,7 +52,7 @@ export function ItemImage({ src, alt, fallbackLabel, fallbackHex = "#FAF9F6", pr
           decoding="async"
           onError={() => setFailed(true)}
           onLoad={() => setLoaded(true)}
-          className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`h-full w-full object-contain p-[7%] drop-shadow-sm transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         />
       )}
     </div>

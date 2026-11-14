@@ -31,6 +31,7 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
         <ItemForm
+          key={item.imageUrl}
           mode="edit"
           itemId={item.id}
           initial={{ imageUrl: item.imageUrl, category: item.category, subTypeName: item.subTypeName, colorFamily: item.colorFamily }}

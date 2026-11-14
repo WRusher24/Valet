@@ -60,7 +60,8 @@ The **Closet** tab turns Valet from inspiration into a tool for what you actuall
 2. Tap **Take photo** (opens the camera on a phone) or **Choose from library**.
 3. Pick a category: Top, Bottom, Outerwear, Shoes, Belt, Watch or Bracelet.
 4. Type a name (for example "Brown Suede Loafers" or "Chronograph Watch") and choose one of 10 colour families: Browns & Tan, Beige & Khaki, Stone & Sand, Blues, Greys, Greens, Whites & Creams, Blacks, Burgundy & Reds, or Yellows & Brights. Tap a family to see which shades it covers.
-5. Tap **Add to Closet**. Open any item later to edit its details, swap its photo or delete it.
+5. Leave **Auto-remove background** ticked (the default) and Valet isolates the item on your device and saves a clean transparent cutout. Untick it to keep the original photo. The first cutout downloads a small model, so it can take a little longer; later ones are quicker.
+6. Tap **Add to Closet**. Open any item later to edit its details, swap its photo or delete it. On an item you uploaded earlier, tap **Remove Background** on its edit page to turn the existing photo into a clean cutout in one step.
 
 Use the category pills at the top of the closet (All, Tops, Bottoms, Outerwear, Shoes, Belts, Watches, Bracelets) and the colour pills underneath to filter your inventory. The two filters combine, so you can see just your beige bottoms or your yellow tops.
 
