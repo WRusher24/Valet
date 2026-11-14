@@ -39,7 +39,7 @@ export default async function ClosetShufflePage({ searchParams }: { searchParams
           <div className="rounded-2xl border border-dashed border-charcoal/25 bg-surface p-8 text-center">
             <p className="font-display text-xl text-obsidian">Your closet needs a few more pieces</p>
             <p className="mx-auto mt-2 max-w-sm text-sm text-charcoal/70">
-              A full outfit needs a top, bottom, shoes, belt, watch and bracelet. Still missing:{" "}
+              An outfit needs at least a top, bottom and shoes. Still missing:{" "}
               {missing.map((c) => CATEGORY_META[c].plural.toLowerCase()).join(", ")}.
             </p>
             <Link href={`/closet/items/new?category=${missing[0]}`} className="btn-primary mt-5">+ Add {CATEGORY_META[missing[0] ?? "top"].label.toLowerCase()}</Link>

@@ -191,34 +191,58 @@ export const wardrobeItems = pgTable(
   (t) => [index("wardrobe_items_user_cat_idx").on(t.userId, t.category)],
 );
 
-/** An outfit assembled from the user's own wardrobe items. */
-export const closetOutfits = pgTable(
-  "closet_outfits",
+/**
+ * An outfit assembled from the user's own wardrobe items, optionally built against a
+ * specific colour combination. Required slots cascade (deleting that item deletes the
+ * outfit); optional slots are cleared instead, so the outfit survives without that piece.
+ */
+export const savedClosetOutfits = pgTable(
+  "saved_closet_outfits",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    season: seasonEnum("season").notNull().default("all_season"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [index("closet_outfits_user_idx").on(t.userId, t.createdAt)],
-);
-
-/** One row per slot of a closet outfit; the (outfit, category) key enforces one item per slot. */
-export const closetOutfitItems = pgTable(
-  "closet_outfit_items",
-  {
-    outfitId: uuid("outfit_id")
-      .notNull()
-      .references(() => closetOutfits.id, { onDelete: "cascade" }),
-    category: wardrobeCategoryEnum("category").notNull(),
-    itemId: uuid("item_id")
+    colorComboId: uuid("color_combo_id").references(() => combos.id, { onDelete: "set null" }),
+    name: text("name"),
+    topId: uuid("top_id")
       .notNull()
       .references(() => wardrobeItems.id, { onDelete: "cascade" }),
+    bottomId: uuid("bottom_id")
+      .notNull()
+      .references(() => wardrobeItems.id, { onDelete: "cascade" }),
+    shoesId: uuid("shoes_id")
+      .notNull()
+      .references(() => wardrobeItems.id, { onDelete: "cascade" }),
+    outerwearId: uuid("outerwear_id").references(() => wardrobeItems.id, { onDelete: "set null" }),
+    beltId: uuid("belt_id").references(() => wardrobeItems.id, { onDelete: "set null" }),
+    watchId: uuid("watch_id").references(() => wardrobeItems.id, { onDelete: "set null" }),
+    braceletId: uuid("bracelet_id").references(() => wardrobeItems.id, { onDelete: "set null" }),
+    season: seasonEnum("season").notNull().default("all_season"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [primaryKey({ columns: [t.outfitId, t.category] }), index("closet_outfit_items_item_idx").on(t.itemId)],
+  (t) => [
+    index("saved_closet_outfits_user_idx").on(t.userId, t.createdAt),
+    index("saved_closet_outfits_combo_idx").on(t.colorComboId),
+  ],
+);
+
+/** "Wore This Today" entries for saved closet outfits (private to the user). */
+export const closetWearLogs = pgTable(
+  "closet_wear_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    savedOutfitId: uuid("saved_outfit_id")
+      .notNull()
+      .references(() => savedClosetOutfits.id, { onDelete: "cascade" }),
+    wornOn: date("worn_on", { mode: "string" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("closet_wear_logs_user_idx").on(t.userId, t.wornOn)],
 );
 
 export type WardrobeItemRow = typeof wardrobeItems.$inferSelect;

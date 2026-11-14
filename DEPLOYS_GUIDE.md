@@ -135,3 +135,9 @@ My Closet adds three tables (`wardrobe_items`, `closet_outfits`, `closet_outfit_
 Closet items now use 10 colour families (`browns_tan`, `beige_khaki`, `stone_sand`, `blues`, `greys`, `greens`, `whites_creams`, `blacks`, `burgundy_reds`, `yellows_brights`). Migration `0003` converts existing items safely: `browns` becomes `browns_tan` and the retired `pastels_other` becomes `yellows_brights`; every other family keeps its name. Existing items in other families may deserve a re-check in the edit form (for example, change a beige chino from Browns & Tan to Beige & Khaki). Vercel applies the migration automatically on deploy; locally run `npm run db:migrate`.
 
 The lookbook's own 8-family tagging (By Item tab) is unchanged; closet families map onto it when matching (Stone & Sand matches both Whites & Creams and Greys, Beige & Khaki matches Browns, Yellows & Brights matches Pastels & Other).
+
+### Closet outfits linked to colour combinations (migrations 0004 and 0005)
+
+Saved closet outfits now live in `saved_closet_outfits` (one column per slot, an optional `color_combo_id`, `notes`, `season`) and wear logs in `closet_wear_logs`. Migration `0004` creates both tables and **copies every existing closet outfit across**, then `0005` drops the previous `closet_outfits` / `closet_outfit_items` tables. Wardrobe items, starter data and everything else are untouched. Vercel applies both automatically on deploy; locally run `npm run db:migrate`.
+
+Foreign keys: deleting a top, bottom or shoes item deletes the outfits using it; deleting an optional piece (outerwear, belt, watch, bracelet) clears that slot and keeps the outfit; deleting a colour combination keeps the outfit as a standalone one.

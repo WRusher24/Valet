@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { logClosetWearAction } from "@/app/actions/closet";
 import { logWearAction } from "@/app/actions/outfits";
 import { formatDate } from "@/lib/constants";
 import { CalendarIcon, CheckIcon } from "./icons";
@@ -13,7 +14,7 @@ function localToday(): string {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
-export function WearButton({ outfitId }: { outfitId: string }) {
+export function WearButton({ outfitId, kind = "lookbook" }: { outfitId: string; kind?: "lookbook" | "closet" }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState("");
@@ -32,7 +33,7 @@ export function WearButton({ outfitId }: { outfitId: string }) {
   function submit() {
     setMessage(null);
     startTransition(async () => {
-      const result = await logWearAction({ outfitId, date });
+      const result = kind === "closet" ? await logClosetWearAction({ outfitId, date }) : await logWearAction({ outfitId, date });
       if (result.ok) {
         setMessage({ kind: "ok", text: `Logged for ${formatDate(result.date)}.` });
         setOpen(false);

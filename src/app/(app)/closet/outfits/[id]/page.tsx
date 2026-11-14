@@ -4,10 +4,12 @@ import { deleteClosetOutfitAction } from "@/app/actions/closet";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { ItemImage } from "@/components/ItemImage";
 import { SeasonTag } from "@/components/SeasonTag";
+import { WearButton } from "@/components/WearButton";
 import { Swatch } from "@/components/Swatch";
 import { CATEGORY_META, familyHex, familyLabel } from "@/lib/closet";
 import { uuidSchema } from "@/lib/closet-schema";
 import { getClosetOutfit } from "@/lib/closet-queries";
+import { formatDate } from "@/lib/constants";
 import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "Closet Outfit" };
@@ -23,7 +25,7 @@ export default async function ClosetOutfitPage({ params }: { params: Promise<{ i
     <main>
       <section className="bg-obsidian px-5 pb-9 pt-6 text-white">
         <div className="mx-auto max-w-3xl">
-          <Link href="/closet?view=outfits" className="text-xs uppercase tracking-editorial text-bronze">← My outfits</Link>
+          <Link href={outfit.comboId ? `/combos/${outfit.comboId}` : "/closet?view=outfits"} className="text-xs uppercase tracking-editorial text-bronze">{outfit.comboId ? "← Colour combination" : "← My outfits"}</Link>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <SeasonTag season={outfit.season} />
             <span className="rounded-full bg-white px-3 py-1 text-[11px] font-medium text-obsidian">{outfit.items.length} pieces</span>
@@ -57,8 +59,18 @@ export default async function ClosetOutfitPage({ params }: { params: Promise<{ i
           ))}
         </ul>
 
+        {outfit.notes && <p className="mt-6 rounded-2xl bg-surface p-4 text-sm text-charcoal/80">{outfit.notes}</p>}
+        {outfit.comboId && (
+          <Link href={`/combos/${outfit.comboId}`} className="mt-4 inline-block text-xs underline underline-offset-2">
+            View this colour combination →
+          </Link>
+        )}
+        {outfit.lastWorn && <p className="mt-4 text-xs text-charcoal/70">Last worn {formatDate(outfit.lastWorn)}</p>}
+        <div className="mt-4"><WearButton outfitId={outfit.id} kind="closet" /></div>
+
         <form action={deleteClosetOutfitAction} className="mt-10 border-t border-charcoal/15 pt-5">
           <input type="hidden" name="outfitId" value={outfit.id} />
+          <input type="hidden" name="returnTo" value={outfit.comboId ? `/combos/${outfit.comboId}` : "/closet?view=outfits"} />
           <ConfirmSubmit message="Delete this outfit? Your closet items are not affected.">Delete this outfit</ConfirmSubmit>
         </form>
       </div>

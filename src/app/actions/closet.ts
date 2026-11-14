@@ -2,18 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { del } from "@vercel/blob";
 import { db } from "@/db";
-import { closetOutfitItems, closetOutfits, wardrobeItems } from "@/db/schema";
+import { closetWearLogs, savedClosetOutfits, wardrobeItems } from "@/db/schema";
 import { blobDeleteTarget } from "@/lib/blob";
-import { REQUIRED_CATEGORIES } from "@/lib/closet";
+import { OUTFIT_SLOT_ORDER } from "@/lib/closet";
 import { closetOutfitSchema, uuidSchema } from "@/lib/closet-schema";
+import { z } from "zod";
 import { createClosetOutfit } from "@/lib/closet-service";
 import { SEASONS } from "@/lib/constants";
 import { getUserOrNull } from "@/lib/session";
 
-export type ClosetActionResult = { ok: true; id: string } | { ok: false; error: string };
+export type ClosetActionResult = { ok: true; id: string; comboId: string | null } | { ok: false; error: string };
 
 const EXPIRED = "Your session has expired. Please sign in again.";
 
@@ -33,7 +34,7 @@ export async function saveShuffledOutfitAction(formData: FormData): Promise<void
   if (!user) redirect("/login");
 
   const items: Record<string, string> = {};
-  for (const category of [...REQUIRED_CATEGORIES, "outerwear"] as const) {
+  for (const category of OUTFIT_SLOT_ORDER) {
     const value = formData.get(`item_${category}`);
     if (typeof value === "string" && value) items[category] = value;
   }
@@ -48,17 +49,66 @@ export async function saveShuffledOutfitAction(formData: FormData): Promise<void
   redirect(`/closet/outfits/${result.id}`);
 }
 
+const SAFE_RETURN = /^\/(?:combos\/[0-9a-f-]{36}|closet(?:\/[A-Za-z0-9/_?=&-]*)?|log(?:\?[A-Za-z0-9=&_-]*)?)$/;
+
+function safeReturnPath(value: FormDataEntryValue | null, fallback: string): string {
+  return typeof value === "string" && SAFE_RETURN.test(value) ? value : fallback;
+}
+
 export async function deleteClosetOutfitAction(formData: FormData): Promise<void> {
   const user = await getUserOrNull();
   if (!user) redirect("/login");
   const id = uuidSchema.safeParse(formData.get("outfitId"));
   if (!id.success) return;
-  await db.delete(closetOutfits).where(and(eq(closetOutfits.id, id.data), eq(closetOutfits.userId, user.id)));
+  await db.delete(savedClosetOutfits).where(and(eq(savedClosetOutfits.id, id.data), eq(savedClosetOutfits.userId, user.id)));
   revalidatePath("/", "layout");
-  redirect("/closet?view=outfits");
+  redirect(safeReturnPath(formData.get("returnTo"), "/closet?view=outfits"));
 }
 
-/** Deletes an item, its photo, and any saved outfit that used it (an outfit can't be missing a slot). */
+const wearSchema = z.object({
+  outfitId: uuidSchema,
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid date."),
+});
+
+/** "Wore This Today" for a saved closet outfit. */
+export async function logClosetWearAction(input: unknown): Promise<{ ok: true; date: string } | { ok: false; error: string }> {
+  const user = await getUserOrNull();
+  if (!user) return { ok: false, error: EXPIRED };
+  const parsed = wearSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid request." };
+  const { outfitId, date } = parsed.data;
+
+  const when = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(when.getTime()) || when.toISOString().slice(0, 10) !== date) return { ok: false, error: "Choose a valid date." };
+  if (when.getTime() > Date.now() + 36 * 60 * 60 * 1000) return { ok: false, error: "You can't log an outfit in the future." };
+
+  const [outfit] = await db
+    .select({ id: savedClosetOutfits.id })
+    .from(savedClosetOutfits)
+    .where(and(eq(savedClosetOutfits.id, outfitId), eq(savedClosetOutfits.userId, user.id)))
+    .limit(1);
+  if (!outfit) return { ok: false, error: "This outfit is no longer available." };
+
+  const [existing] = await db
+    .select({ id: closetWearLogs.id })
+    .from(closetWearLogs)
+    .where(and(eq(closetWearLogs.userId, user.id), eq(closetWearLogs.savedOutfitId, outfitId), eq(closetWearLogs.wornOn, date)))
+    .limit(1);
+  if (!existing) await db.insert(closetWearLogs).values({ userId: user.id, savedOutfitId: outfitId, wornOn: date });
+  revalidatePath("/", "layout");
+  return { ok: true, date };
+}
+
+export async function deleteClosetWearLogAction(formData: FormData): Promise<void> {
+  const user = await getUserOrNull();
+  if (!user) return;
+  const id = uuidSchema.safeParse(formData.get("logId"));
+  if (!id.success) return;
+  await db.delete(closetWearLogs).where(and(eq(closetWearLogs.id, id.data), eq(closetWearLogs.userId, user.id)));
+  revalidatePath("/", "layout");
+}
+
+/** Deletes an item and its photo. */
 export async function deleteClosetItemAction(formData: FormData): Promise<void> {
   const user = await getUserOrNull();
   if (!user) redirect("/login");
@@ -72,16 +122,8 @@ export async function deleteClosetItemAction(formData: FormData): Promise<void> 
     .limit(1);
   if (!item) redirect("/closet");
 
-  const dependents = await db
-    .select({ outfitId: closetOutfitItems.outfitId })
-    .from(closetOutfitItems)
-    .where(eq(closetOutfitItems.itemId, id.data));
-  const outfitIds = dependents.map((d) => d.outfitId);
-
-  // Outfits first: if the second statement fails nothing is left half-built.
-  if (outfitIds.length > 0) {
-    await db.delete(closetOutfits).where(and(inArray(closetOutfits.id, outfitIds), eq(closetOutfits.userId, user.id)));
-  }
+  // The database does the rest: outfits that used this item as a required slot (top, bottom,
+  // shoes) are removed, and outfits that used it as an optional piece simply lose that piece.
   await db.delete(wardrobeItems).where(and(eq(wardrobeItems.id, id.data), eq(wardrobeItems.userId, user.id)));
 
   const target = blobDeleteTarget(item.imageUrl);

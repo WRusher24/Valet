@@ -13,9 +13,17 @@ export const CATEGORY_META: Record<WardrobeCategory, { label: string; plural: st
   bracelet: { label: "Bracelet", plural: "Bracelets" },
 };
 
-/** Slots every complete outfit must fill. Outerwear is optional. */
-export const REQUIRED_CATEGORIES = ["top", "bottom", "shoes", "belt", "watch", "bracelet"] as const;
+/** Slots every outfit must fill. */
+export const REQUIRED_CATEGORIES = ["top", "bottom", "shoes"] as const;
 export type RequiredCategory = (typeof REQUIRED_CATEGORIES)[number];
+
+/** Slots that make an outfit better but can be skipped. */
+export const OPTIONAL_CATEGORIES = ["outerwear", "belt", "watch", "bracelet"] as const;
+export type OptionalCategory = (typeof OPTIONAL_CATEGORIES)[number];
+
+export function isRequiredCategory(c: WardrobeCategory): c is RequiredCategory {
+  return (REQUIRED_CATEGORIES as readonly string[]).includes(c);
+}
 
 /** Display order for an outfit, head to toe. */
 export const OUTFIT_SLOT_ORDER = ["outerwear", "top", "bottom", "shoes", "belt", "watch", "bracelet"] as const satisfies readonly WardrobeCategory[];

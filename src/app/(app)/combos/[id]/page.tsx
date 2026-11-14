@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteComboAction } from "@/app/actions/combos";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
+import { ClosetOutfitPanel } from "@/components/ClosetOutfitPanel";
 import { OutfitCard } from "@/components/OutfitCard";
 import { SeasonTag } from "@/components/SeasonTag";
 import { Swatch } from "@/components/Swatch";
 import { formatDate } from "@/lib/constants";
+import { listClosetOutfitsForCombo } from "@/lib/closet-queries";
 import { getCombo, lastWornForCombo, listOutfitsForCombo } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 
@@ -17,9 +19,10 @@ export default async function ComboPage({ params }: { params: Promise<{ id: stri
   const combo = await getCombo(user.id, id);
   if (!combo) notFound();
 
-  const [outfits, lastWorn] = await Promise.all([
+  const [outfits, lastWorn, closetOutfits] = await Promise.all([
     listOutfitsForCombo(user.id, combo.id),
     lastWornForCombo(user.id, combo.id),
+    listClosetOutfitsForCombo(user.id, combo.id),
   ]);
 
   return (
@@ -48,7 +51,29 @@ export default async function ComboPage({ params }: { params: Promise<{ id: stri
       </section>
 
       <div className="mx-auto max-w-3xl px-4 pt-6">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href={`/closet/outfits/new?combo=${combo.id}`}
+          className="btn-primary w-full !py-4 text-base tracking-wide"
+        >
+          + Build Outfit from My Closet
+        </Link>
+
+        <section aria-labelledby="closet-outfits-heading" className="mt-8">
+          <h2 id="closet-outfits-heading" className="mb-4 text-2xl">My Closet Outfits</h2>
+          {closetOutfits.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-charcoal/25 bg-surface p-6 text-center text-sm text-charcoal/70">
+              Nothing here yet. Build an outfit from the clothes you own in these colours.
+            </p>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2">
+              {closetOutfits.map((o) => (
+                <ClosetOutfitPanel key={o.id} outfit={o} returnTo={`/combos/${combo.id}`} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <div className="mb-5 mt-10 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl">Outfit Inspiration</h2>
           <Link href={`/add?tab=photo&combo=${combo.id}`} className="btn-outline">
             + Upload your own photo

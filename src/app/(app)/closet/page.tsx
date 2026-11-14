@@ -73,7 +73,7 @@ async function Items({
           <Link href={`/closet/items/new${filter !== "all" ? `?category=${filter}` : ""}`} className="btn-primary mt-5">+ Add your first item</Link>
         </div>
       ) : (
-        <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <ul className="mt-5 grid grid-cols-3 gap-3">
           {items.map((item) => (
             <li key={item.id}>
               <ClosetItemCard item={item} href={`/closet/items/${item.id}`} />

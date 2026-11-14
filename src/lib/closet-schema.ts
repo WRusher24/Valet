@@ -15,14 +15,16 @@ export type ItemMeta = z.infer<typeof itemMetaSchema>;
 export const closetOutfitSchema = z.object({
   name: z.string().trim().max(80, "That name is too long.").optional(),
   season: z.enum(SEASONS),
+  comboId: uuidSchema.nullish(),
+  notes: z.string().trim().max(500, "Notes can be at most 500 characters.").optional(),
   items: z.object({
     top: uuidSchema,
     bottom: uuidSchema,
     shoes: uuidSchema,
-    belt: uuidSchema,
-    watch: uuidSchema,
-    bracelet: uuidSchema,
     outerwear: uuidSchema.optional(),
+    belt: uuidSchema.optional(),
+    watch: uuidSchema.optional(),
+    bracelet: uuidSchema.optional(),
   }),
 });
 export type ClosetOutfitInput = z.infer<typeof closetOutfitSchema>;

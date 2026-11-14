@@ -65,13 +65,20 @@ The **Closet** tab turns Valet from inspiration into a tool for what you actuall
 Use the category pills at the top of the closet (All, Tops, Bottoms, Outerwear, Shoes, Belts, Watches, Bracelets) and the colour pills underneath to filter your inventory. The two filters combine, so you can see just your beige bottoms or your yellow tops.
 
 ### Build an outfit from your own pieces
-**Closet → Build Outfit** shows your photos for every slot: one top, bottom, pair of shoes, belt, watch and bracelet, plus optional outerwear. Tap a photo to select it, or tap **Smart-fill from my closet** to start from a colour-matched suggestion. The palette at the top updates as you choose. Saved outfits appear under **Closet → My Outfits**, with the exact photos of your pieces next to the palette.
+**Closet → Build Outfit** shows your photos in a clean three-per-row grid for every category. **Top, Bottom and Shoes are required**; **Outerwear, Belt, Watch and Bracelet are optional**, so you can save an outfit without every accessory.
+
+At the top is a strip of colour-only palette cards. Tap one to build against that palette: your closet narrows to the pieces whose colours match it. Tap **Show All Items** to see everything again (matches stay highlighted with a "Match" tag and the rest are dimmed), or **Clear** to drop the palette. **Smart-fill** suggests a colour-matched start. You can add a name, notes and a season, and the palette strip near the top updates as you choose.
+
+### Build from a colour combination
+Every combination page has a **+ Build Outfit from My Closet** button. It opens the builder already set to that palette. When you save, the outfit appears in a **My Closet Outfits** section on that combination's page, above the inspiration photos. Each one is shown as a collage of the exact photos of your garments (top row) and accessories (second row), with **Wore This Today** and delete buttons. Closet outfits you log also appear in **Log → Worn History**.
+
+Outfits you build from the Closet tab without choosing a palette are saved on their own under **Closet → My Outfits**.
 
 ### Smart shuffle from your closet
-Open **Shuffle → Shuffle from My Closet**, choose a weather filter and tap the button. Valet builds a full outfit from your real items, matching colours (for example, the belt always follows the shoes when it can). Tap **Shuffle again** for another idea or **Save this outfit** to keep it. If a slot is empty, Valet tells you which category to add.
+Open **Shuffle → Shuffle from My Closet**, choose a weather filter and tap the button. Valet builds an outfit from your real items (top, bottom and shoes, plus belt, watch, bracelet and outerwear when you own them), matching colours (for example, the belt follows the shoes when it can). Tap **Shuffle again** for another idea or **Save this outfit** to keep it. If top, bottom or shoes is empty, Valet tells you which category to add.
 
 ### Match one piece
 **Closet → Find Matches** (or "Or pick a piece from my closet" on the By Item tab) lets you narrow your closet by any of the 10 colour families, then pick one specific belt, watch, shirt or pair of shoes. You instantly see compatible pieces in your closet, your saved outfits that include it, and lookbook palettes and outfits that suit it.
 
 ### Deleting
-Deleting an item also deletes any saved outfit that used it, because an outfit can't have an empty slot. Valet warns you with the number of affected outfits first.
+Deleting a top, bottom or pair of shoes also deletes the saved outfits that use it, because those slots are required. Deleting a belt, watch, bracelet or outerwear piece keeps your outfits and simply removes that piece from them. Valet tells you what will happen before you confirm.

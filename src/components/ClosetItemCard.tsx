@@ -15,12 +15,12 @@ export function ClosetItemCard({ item, href }: { item: ClosetItem; href: string 
         fallbackLabel={CATEGORY_META[item.category].label}
         fallbackHex={familyHex(item.colorFamily)}
       />
-      <div className="space-y-1.5 p-3">
-        <p className="text-[10px] font-medium uppercase tracking-editorial text-bronze">{CATEGORY_META[item.category].label}</p>
-        <p className="line-clamp-2 text-sm font-medium leading-snug text-obsidian">{item.subTypeName}</p>
-        <p className="flex items-center gap-1.5 text-[11px] text-charcoal/70">
-          <span className="h-3 w-3 rounded-full border border-bronze" style={{ backgroundColor: familyHex(item.colorFamily) }} aria-hidden />
-          {familyLabel(item.colorFamily)}
+      <div className="space-y-1 p-2 sm:space-y-1.5 sm:p-3">
+        <p className="truncate text-[9px] font-medium uppercase tracking-wide text-bronze sm:text-[10px] sm:tracking-editorial">{CATEGORY_META[item.category].label}</p>
+        <p className="line-clamp-2 text-xs font-medium leading-snug text-obsidian sm:text-sm">{item.subTypeName}</p>
+        <p className="flex items-center gap-1 text-[10px] text-charcoal/70 sm:gap-1.5 sm:text-[11px]">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full sm:h-3 sm:w-3 border border-bronze" style={{ backgroundColor: familyHex(item.colorFamily) }} aria-hidden />
+          <span className="truncate">{familyLabel(item.colorFamily)}</span>
         </p>
       </div>
     </Link>

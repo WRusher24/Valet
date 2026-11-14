@@ -35,7 +35,7 @@ export default function ShufflePage() {
         <form action="/shuffle/closet" method="get" className="mt-6 rounded-3xl border border-obsidian bg-obsidian p-6 text-center text-white">
           <h2 className="text-2xl !text-white">Shuffle from My Closet</h2>
           <p className="mx-auto mt-2 max-w-sm text-sm text-white/70">
-            Builds a full outfit from the real pieces you own — top, bottom, shoes, belt, watch and bracelet — matched for colour harmony.
+            Builds a full outfit from the real pieces you own — top, bottom and shoes, plus belt, watch, bracelet and outerwear when you have them — matched for colour harmony.
           </p>
           <fieldset className="mt-5">
             <legend className="sr-only">Weather</legend>

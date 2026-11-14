@@ -4,7 +4,7 @@ import { deleteClosetItemAction } from "@/app/actions/closet";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { ItemForm } from "@/components/ItemForm";
 import { PageHero } from "@/components/PageHero";
-import { CATEGORY_META } from "@/lib/closet";
+import { CATEGORY_META, isRequiredCategory } from "@/lib/closet";
 import { uuidSchema } from "@/lib/closet-schema";
 import { getItem, listOutfitsUsingItem } from "@/lib/closet-queries";
 import { requireUser } from "@/lib/session";
@@ -39,9 +39,11 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
           <input type="hidden" name="itemId" value={item.id} />
           <ConfirmSubmit
             message={
-              usedIn.length > 0
-                ? `Delete "${item.subTypeName}"? ${usedIn.length} saved outfit${usedIn.length === 1 ? "" : "s"} using it will be deleted too. This can't be undone.`
-                : `Delete "${item.subTypeName}"? This can't be undone.`
+              usedIn.length === 0
+                ? `Delete "${item.subTypeName}"? This can't be undone.`
+                : isRequiredCategory(item.category)
+                  ? `Delete "${item.subTypeName}"? ${usedIn.length} saved outfit${usedIn.length === 1 ? "" : "s"} using it will be deleted too. This can't be undone.`
+                  : `Delete "${item.subTypeName}"? It will be removed from ${usedIn.length} saved outfit${usedIn.length === 1 ? "" : "s"}, which stay saved without it.`
             }
           >
             Delete this item
