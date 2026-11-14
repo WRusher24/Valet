@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, isNull, notExists, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, inArray, isNull, notExists, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   comboColors,
@@ -343,4 +343,24 @@ export async function countHiddenStarter(userId: string): Promise<{ outfits: num
     db.select({ n: sql<number>`count(*)::int` }).from(hiddenCombos).where(eq(hiddenCombos.userId, userId)),
   ]);
   return { outfits: o[0]?.n ?? 0, combos: c[0]?.n ?? 0 };
+}
+
+/** Visible combinations whose palette contains at least one colour from `family`. */
+export async function listCombosWithFamily(userId: string, family: ColorFamily): Promise<ComboSummary[]> {
+  const rows = await db
+    .select(comboColumns)
+    .from(combos)
+    .where(
+      and(
+        comboVisible(userId),
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(comboColors)
+            .where(and(eq(comboColors.comboId, combos.id), eq(comboColors.family, family))),
+        ),
+      ),
+    )
+    .orderBy(sql`(${combos.userId} is null)`, asc(combos.title));
+  return summarize(userId, rows);
 }

@@ -40,6 +40,9 @@ export default async function ByItemPage({
         <p className="max-w-md text-sm text-white/70">
           Pick one garment and a broad colour family to see every palette and outfit that features it.
         </p>
+        <Link href="/closet/match" className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-obsidian">
+          Or pick a piece from my closet →
+        </Link>
       </PageHero>
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 pt-6">

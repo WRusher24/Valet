@@ -11,6 +11,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { COLOR_FAMILIES, GARMENT_SLOTS, SEASONS } from "@/lib/constants";
+import { WARDROBE_CATEGORIES, WARDROBE_FAMILIES } from "@/lib/closet";
 
 export const seasonEnum = pgEnum("season", SEASONS);
 export const colorFamilyEnum = pgEnum("color_family", COLOR_FAMILIES);
@@ -165,3 +166,59 @@ export const hiddenCombos = pgTable(
   },
   (t) => [primaryKey({ columns: [t.userId, t.comboId] })],
 );
+
+/* ------------------------------------------------------------------ */
+/* My Closet                                                           */
+/* ------------------------------------------------------------------ */
+
+export const wardrobeCategoryEnum = pgEnum("wardrobe_category", WARDROBE_CATEGORIES);
+export const wardrobeFamilyEnum = pgEnum("wardrobe_color_family", WARDROBE_FAMILIES);
+
+/** A physical garment or accessory owned by one user. Always filtered by `user_id`. */
+export const wardrobeItems = pgTable(
+  "wardrobe_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    imageUrl: text("image_url").notNull(),
+    category: wardrobeCategoryEnum("category").notNull(),
+    subTypeName: text("sub_type_name").notNull(),
+    colorFamily: wardrobeFamilyEnum("color_family").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("wardrobe_items_user_cat_idx").on(t.userId, t.category)],
+);
+
+/** An outfit assembled from the user's own wardrobe items. */
+export const closetOutfits = pgTable(
+  "closet_outfits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    season: seasonEnum("season").notNull().default("all_season"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("closet_outfits_user_idx").on(t.userId, t.createdAt)],
+);
+
+/** One row per slot of a closet outfit; the (outfit, category) key enforces one item per slot. */
+export const closetOutfitItems = pgTable(
+  "closet_outfit_items",
+  {
+    outfitId: uuid("outfit_id")
+      .notNull()
+      .references(() => closetOutfits.id, { onDelete: "cascade" }),
+    category: wardrobeCategoryEnum("category").notNull(),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => wardrobeItems.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.outfitId, t.category] }), index("closet_outfit_items_item_idx").on(t.itemId)],
+);
+
+export type WardrobeItemRow = typeof wardrobeItems.$inferSelect;

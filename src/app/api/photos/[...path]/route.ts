@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pat
   const segments = (await params).path;
   if (segments.some((s) => s === ".." || s === "." || s === "")) return new Response("Not found", { status: 404 });
   const pathname = segments.map(decodeURIComponent).join("/");
-  if (!pathname.startsWith(`outfits/${userId}/`)) return new Response("Not found", { status: 404 });
+  if (!pathname.startsWith(`outfits/${userId}/`) && !pathname.startsWith(`closet/${userId}/`)) return new Response("Not found", { status: 404 });
 
   const result = await get(pathname, { access: "private" }).catch(() => null);
   if (!result || result.statusCode !== 200) return new Response("Not found", { status: 404 });

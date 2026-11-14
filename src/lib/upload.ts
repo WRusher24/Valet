@@ -33,7 +33,11 @@ async function putWithAccess(pathname: string, body: Buffer, contentType: string
  * Works with both public and private stores. Private stores return a same-origin
  * `/api/photos/...` reference that is served only to the owner.
  */
-export async function storeImage(userId: string, file: unknown): Promise<StoreResult> {
+export async function storeImage(
+  userId: string,
+  file: unknown,
+  folder: "outfits" | "closet" = "outfits",
+): Promise<StoreResult> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     return { ok: false, status: 503, error: "Photo uploads aren't configured yet. Add BLOB_READ_WRITE_TOKEN to the environment." };
   }
@@ -43,7 +47,7 @@ export async function storeImage(userId: string, file: unknown): Promise<StoreRe
   const image = detectImage(buffer);
   if (!image) return { ok: false, status: 415, error: "Only JPEG, PNG or WebP photos are supported." };
 
-  const pathname = `outfits/${userId}/${randomUUID()}.${image.ext}`;
+  const pathname = `${folder}/${userId}/${randomUUID()}.${image.ext}`;
   const body = Buffer.from(buffer);
   const first = configuredAccess() ?? detectedAccess ?? "public";
   const order: ("public" | "private")[] = first === "public" ? ["public", "private"] : ["private", "public"];

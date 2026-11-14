@@ -121,3 +121,11 @@ Every later push to the production branch redeploys automatically.
 | `UntrustedHost` or session errors in production | Make sure `AUTH_SECRET` is set in Vercel. |
 | Upload says photo uploads aren't configured | Add `BLOB_READ_WRITE_TOKEN` and redeploy. |
 | Explore is empty | Run `npm run db:seed` against the same database the app uses. |
+
+## 10. My Closet module
+
+My Closet adds three tables (`wardrobe_items`, `closet_outfits`, `closet_outfit_items`) and two enums in migration `drizzle/0002_*.sql`. The migration is purely additive, so existing users, combos, photos and wear logs are untouched.
+
+- **On Vercel:** nothing to do. The `vercel-build` script applies pending migrations on every deploy.
+- **Locally:** run `npm run db:migrate` (recommended) or `npm run db:push`.
+- Closet photos use the same Vercel Blob store as outfit photos (stored under `closet/<user id>/`) and need `BLOB_READ_WRITE_TOKEN`. Private stores are supported automatically.

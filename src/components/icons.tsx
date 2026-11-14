@@ -45,3 +45,9 @@ export const LogoutIcon = (p: P) => (
 export const CheckIcon = (p: P) => (
   <svg {...base} width={16} height={16} {...p}><path d="M5 12.5l4.5 4.5L19 7" /></svg>
 );
+export const HangerIcon = (p: P) => (
+  <svg {...base} {...p}><path d="M12 7.5a2.2 2.2 0 1 0-2.2-2.2M12 7.5v2.2L3.5 16a1.6 1.6 0 0 0 1 2.9h15a1.6 1.6 0 0 0 1-2.9L12 9.7" /></svg>
+);
+export const CameraIcon = (p: P) => (
+  <svg {...base} width={18} height={18} {...p}><path d="M4 8h3l1.5-2.5h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+);
